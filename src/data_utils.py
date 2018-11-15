@@ -57,14 +57,15 @@ def get_dataset(x, y, min_points, shuffle=True):
         # increase number of points
         min_points += 1
     # shuffling
-    x_t, y_t = shuffle_arrays(x_t, y_t)
+    if shuffle:
+        x_t, y_t = shuffle_arrays(x_t, y_t)
     return (x_t, y_t)
     
 
-def seedGenerator(x, y, batch_size, shuffle=True):
+def seedGenerator(x, y, batch_size, shuffle=True, get_dataset_fn = get_dataset):
     minNPointsInTracklet = 3
     # transform input sequences into dataset
-    x, y = get_dataset(x, y, minNPointsInTracklet)
+    x, y = get_dataset_fn(x, y, minNPointsInTracklet)
     while True:
         # this loop produces batches
         for b in range(len(x) // batch_size):
