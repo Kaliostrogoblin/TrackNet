@@ -13,12 +13,15 @@ ap.add_argument("--inference", type=bool, default=False,
     help="If inference=True, save the inference speed")
 ap.add_argument("--data_dir", type=str, default="data",
     help="Directory with the data for training")
+ap.add_argument("--masked_hack", type=bool, default=False,
+    help="Disable masking layer")
 args = vars(ap.parse_args())
 
 G = args["gpus"]                # number of GPUs
 batch_size = args["batch_size"] # samples per gradient step
 n_epochs = args["n_epochs"]     # training epochs
 data_dir = args["data_dir"]     # training epochs
+masked_hack = args["masked_hack"] # hack
 
 # import modules
 if G > 1:
@@ -58,10 +61,10 @@ if __name__ == '__main__':
     if G == 0:
         os.environ["CUDA_VISIBLE_DEVICES"] = ''
         print("[INFO] training with CPU...")
-        tracknet = TrackNet()
+        tracknet = TrackNet(masked_hack = masked_hack)
     elif G == 1:
         print("[INFO] training with 1 GPU...")
-        tracknet = TrackNet()
+        tracknet = TrackNet(masked_hack = masked_hack)
     else:
         batch_size = batch_size * G # correct the batch size
         print("[INFO] training with {} GPUs...".format(G))
@@ -69,7 +72,7 @@ if __name__ == '__main__':
         # the results from the gradient updates on the CPU
         with tf.device("/cpu:0"):
             # initialize the model
-            tracknet = TrackNet()
+            tracknet = TrackNet(masked_hack = masked_hack)
         # make the model parallel
         tracknet = multi_gpu_model(tracknet, gpus=G)
 

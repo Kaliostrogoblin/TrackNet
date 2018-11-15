@@ -33,16 +33,18 @@ class TrackNet:
     # Returns 
         keras Model
     """
-    def __init__(self, input_shape, level, weights_file):
+    def __init__(self, input_shape, level, weights_file, masked_hack):
         self._set_input_shape(input_shape)
+        self.__masked_hack = masked_hack
         self._set_level(level)
         self._build_model()
         self._load_pretrained(weights_file)
 
 
-    def __new__(cls, input_shape=(None, 3), level=2, weights_file=None):
+
+    def __new__(cls, input_shape=(None, 3), level=2, weights_file=None, masked_hack=False):
         instance = super(TrackNet, cls).__new__(cls)
-        instance.__init__(input_shape, level, weights_file)
+        instance.__init__(input_shape, level, weights_file, masked_hack)
         return instance.model
 
 
@@ -65,7 +67,10 @@ class TrackNet:
         # encode each timestep independently skipping zeros strings
         x = TimeDistributed(Masking(mask_value=0.))(input_)
         # timesteps encoder layer
-        x = Conv1D(32, 3, padding='same', activation='relu')(x)
+        if self.__masked_hack:
+            x = Conv1D(32, 3, padding='same', activation='relu')(input_)
+        else:
+            x = Conv1D(32, 3, padding='same', activation='relu')(x)
         x = BatchNormalization()(x)
         # recurrent layers
         x = GRU(32, dropout=0., return_sequences=True)(x)
