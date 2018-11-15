@@ -11,12 +11,14 @@ ap.add_argument("--batch_size", type=int, default=128,
     help="Number of samples per gradient update")
 ap.add_argument("--inference", type=bool, default=False,
     help="If inference=True, save the inference speed")
+ap.add_argument("--data_dir", type=str, default="data",
+    help="Directory with the data for training")
 args = vars(ap.parse_args())
 
 G = args["gpus"]                # number of GPUs
 batch_size = args["batch_size"] # samples per gradient step
 n_epochs = args["n_epochs"]     # training epochs
-
+data_dir = args["data_dir"]     # training epochs
 
 # import modules
 if G > 1:
@@ -45,7 +47,7 @@ import os
 
 if __name__ == '__main__':
     print('[INFO] getting data...')
-    (x_train, y_train), (x_test, y_test) = read_data("data")
+    (x_train, y_train), (x_test, y_test) = read_data(data_dir)
     # create generators
     steps_per_epoch = len(x_train) // batch_size
     #validation_steps = len(x_test) // batch_size
