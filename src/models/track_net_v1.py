@@ -35,12 +35,10 @@ class TrackNet:
     """
     def __init__(self, input_shape, level, weights_file, masked_hack):
         self._set_input_shape(input_shape)
-        self.__masked_hack = masked_hack
+        self._masked_hack = masked_hack
         self._set_level(level)
         self._build_model()
         self._load_pretrained(weights_file)
-
-
 
     def __new__(cls, input_shape=(None, 3), level=2, weights_file=None, masked_hack=False):
         instance = super(TrackNet, cls).__new__(cls)
@@ -67,7 +65,7 @@ class TrackNet:
         # encode each timestep independently skipping zeros strings
         x = TimeDistributed(Masking(mask_value=0.))(input_)
         # timesteps encoder layer
-        if self.__masked_hack:
+        if self._masked_hack:
             x = Conv1D(32, 3, padding='same', activation='relu')(input_)
         else:
             x = Conv1D(32, 3, padding='same', activation='relu')(x)
@@ -98,6 +96,8 @@ class TrackNet:
             output = outputs[0]
         # create model
         self.model = Model(inputs=input_, outputs=output, name='TrackNet')
+        print("[DEBUG] model:")
+        self.model.summary
 
 
     def _load_pretrained(self, weights_file):

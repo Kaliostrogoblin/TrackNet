@@ -1,5 +1,5 @@
 import argparse
-
+import tensorflow as tf
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 
@@ -15,6 +15,8 @@ ap.add_argument("--data_dir", type=str, default="data",
     help="Directory with the data for training")
 ap.add_argument("--masked_hack", type=bool, default=False,
     help="Disable masking layer")
+ap.add_argument("--track_net_version", type=int, default=1,
+    help="Version of TrackNet: 1 stands for version with GRU, 2 stands for version with Conv1D")
 args = vars(ap.parse_args())
 
 G = args["gpus"]                # number of GPUs
@@ -22,7 +24,7 @@ batch_size = args["batch_size"] # samples per gradient step
 n_epochs = args["n_epochs"]     # training epochs
 data_dir = args["data_dir"]     # training epochs
 masked_hack = args["masked_hack"] # hack
-
+track_net_version = args["track_net_version"]
 # import modules
 if G > 1:
     from keras.utils import multi_gpu_model
@@ -32,7 +34,8 @@ from src.data_utils import seedGenerator
 from src.data_utils import read_data
 from src.data_utils import get_dataset
 # model
-from src.models import TrackNet
+from src.models.track_net_v1 import TrackNet
+from src.models.track_net_v2 import TrackNetV2
 # callbacks
 from src.callbacks import ModelCheckpoint
 from src.callbacks import TimingCallback
@@ -57,14 +60,15 @@ if __name__ == '__main__':
     # create generator instances
     train_gen = seedGenerator(x_train, y_train, batch_size)
     x_test, y_test = get_dataset(x_test, y_test, 3)
-
+    TrackNetCls = TrackNetV2 if track_net_version == 2 else TrackNet
+    print("[INFO] training ", TrackNetCls.__name__, "version.")
     if G == 0:
         os.environ["CUDA_VISIBLE_DEVICES"] = ''
         print("[INFO] training with CPU...")
-        tracknet = TrackNet(masked_hack = masked_hack)
+        tracknet = TrackNetCls(masked_hack = masked_hack)
     elif G == 1:
         print("[INFO] training with 1 GPU...")
-        tracknet = TrackNet(masked_hack = masked_hack)
+        tracknet = TrackNetCls(masked_hack = masked_hack)
     else:
         batch_size = batch_size * G # correct the batch size
         print("[INFO] training with {} GPUs...".format(G))
@@ -72,7 +76,7 @@ if __name__ == '__main__':
         # the results from the gradient updates on the CPU
         with tf.device("/cpu:0"):
             # initialize the model
-            tracknet = TrackNet(masked_hack = masked_hack)
+            tracknet = TrackNetCls(masked_hack = masked_hack)
         # make the model parallel
         tracknet = multi_gpu_model(tracknet, gpus=G)
 
