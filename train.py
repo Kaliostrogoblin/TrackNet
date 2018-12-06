@@ -9,8 +9,8 @@ ap.add_argument("--n_epochs", type=int, default=50,
     help="Number of epochs of TreeNet")
 ap.add_argument("--batch_size", type=int, default=128,
     help="Number of samples per gradient update")
-ap.add_argument("--inference", type=bool, default=False,
-    help="If inference=True, save the inference speed")
+ap.add_argument("--save_path", type=str, default='models',
+    help="The name of the directory to save model's checkpoints")
 args = vars(ap.parse_args())
 
 G = args["gpus"]                # number of GPUs
@@ -26,6 +26,7 @@ if G > 1:
 from src.data_utils import seedGenerator
 from src.data_utils import read_data
 from src.data_utils import get_dataset
+from src.data_utils import mkdir
 # model
 from src.models import TrackNet
 # callbacks
@@ -39,6 +40,7 @@ from src.metrics import accuracy
 from src.metrics import point_in_area
 from src.metrics import circle_area
 # other imports
+from keras.callbacks import ModelCheckpoint
 from keras.optimizers import Adam
 import os
 
@@ -82,14 +84,26 @@ if __name__ == '__main__':
         optimizer=Adam(),
         metrics=[accuracy, point_in_area, circle_area]
     )
-
+    print("[INFO] create directory for models")
+    mkdir(args['save_path'])
     # train the network
     print("[INFO] training network...")
+    model_name_template = ("tracknet-{epoch:02d}"
+                                   "-val_loss-{val_loss:.4f}" 
+                                   "-val_acc-{val_accuracy:.4f}" 
+                                   "-val_point_in_area-{val_point_in_area:.4f}" 
+                                   "-val_circle_area-{val_circle_area:.4f}.h5")
     history = tracknet.fit_generator(
         generator=train_gen,
         steps_per_epoch=steps_per_epoch,
         epochs=n_epochs,
         validation_data=(x_test, y_test),
         validation_steps=1,
-        callbacks = [Metrics()]
+        callbacks = [ModelCheckpoint(
+                        os.path.join(args['save_path'], model_name_template), 
+                        monitor='val_loss',
+                        mode='min', 
+                        save_best_only=True, 
+                        verbose=1),
+                     Metrics()]
     )

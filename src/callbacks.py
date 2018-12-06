@@ -10,6 +10,8 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import confusion_matrix
 
+import shutil
+
 
 class TimingCallback(Callback):
     def __init__(self):
@@ -63,9 +65,6 @@ class Metrics(Callback):
 # time_cb = TimingCallback()
 # metrics_cb = Metrics()
 
-# __model_dir = "../model"
-# if (not os.path.isdir(__model_dir)):
-#     os.mkdir(__model_dir)
 # __filepath = "b-best-model-{epoch:02d}-{val_loss:.4f}.hdf5"
 # checkpoint = ModelCheckpoint(os.path.join(__model_dir, __filepath), 
 #     mode='min', save_best_only=True, verbose=1)

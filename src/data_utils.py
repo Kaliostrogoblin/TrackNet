@@ -1,4 +1,5 @@
 import numpy as np
+import shutil
 import os
 
 
@@ -75,3 +76,11 @@ def seedGenerator(x, y, batch_size, shuffle=True):
                 batch_xs, batch_ys = shuffle_arrays(batch_xs, batch_ys)
             yield (batch_xs, batch_ys)
 
+
+def mkdir(dirname):
+    '''Creates directory. If already exists
+    removes the existed version
+    '''
+    if os.path.isdir(dirname):
+        shutil.rmtree(dirname)
+    os.mkdir(dirname)
