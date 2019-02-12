@@ -24,7 +24,7 @@ def progress(count, total, status=''):
 
 hitspath = "bmn_tracking/bmn_box_default_10K_events_hits.csv"
 mcpath = "bmn_tracking/bmn_box_default_10K_events_mc_points.csv"
-matchedpath = "bmn_tracking/kek.csv"
+matchedpath = "bmn_tracking/kek2.csv"
 
 
 def addStationIndex(df, column_to_index, stationCount=6):
@@ -42,7 +42,7 @@ def main(validate=False):
     total_events = len(mc_stations.event_id.value_counts())
 
     mc_filtered_grouped = mc_stations.groupby(['event_id', 'track_id'], as_index=False) \
-        .filter(lambda x: len(x['track_id']) > 1 and progress(x.name[0], total_events, " filtering events.") is None) \
+        .filter(lambda x: len(x['track_id']) > 5 and progress(x.name[0], total_events, " filtering events.") is None) \
         .groupby(['station_id', 'event_id'])
     print("\nStarting event matching\n")
     # mc_grouped = mc_stations.groupby(['event_id']).filter(lambda df: df.track_id.value_counts() > 1)
@@ -86,7 +86,7 @@ def main(validate=False):
             hits_df.at[group_index[idx], 'track_id'] = mc_group.track_id.iloc[i]
 
     hits_df = hits_df.astype({'event_id': int, 'station_id': int, 'track_id': int})
-    hits_df.to_csv("kek.csv", index=None)
+    hits_df.to_csv("kek2.csv", index=None)
 
 
 def validate_draw(found_idx, hits_points, mc_x, mc_xy, mc_y, x, y):
@@ -116,18 +116,24 @@ dist.total_events = 0
 
 def validate_all():
     print('VALIDATE')
-    mc_df = pd.read_csv(mcpath, encoding="utf-8")
+    mc_df = pd.read_csv(mcpath, encoding="utf-8")[:50000]
     mc_stations = addStationIndex(mc_df, 'z_in')
-    matched_df = pd.read_csv(matchedpath, encoding="utf-8")
+    matched_df = pd.read_csv(matchedpath, encoding="utf-8")[:50000]
     print('MERGING....')
     res = pd.merge(matched_df, mc_stations, on=['event_id', 'track_id', 'station_id'])
     print('COUNTING....\n')
     total_events = len(mc_stations.event_id.value_counts())
     dist.total_events = total_events
-    t = res.apply(dist, axis=1).describe()
+    t = res.apply(dist, axis=1)
+    res['dist'] = t
     print('\nRESULT:')
-    print(t)
-    t.to_csv('RESULT.csv', header=True)
+    print(t.describe())
+    print('\nMAX DISTANCE %f IN ROW #%d' % (t.max(), t.idxmax()))
+    row = res.loc[[t.idxmax()]]
+    print('\nSHOWING TRACK FOR THIS ROW. TRACK #%d EVENT #%d' % (row.track_id, row.event_id))
+    tr_id = int(row.track_id)
+    ev_id = int(row.event_id)
+    print(res[(res.track_id == tr_id) & (res.event_id == ev_id)].to_string())
     return
 
 if __name__ == '__main__':
