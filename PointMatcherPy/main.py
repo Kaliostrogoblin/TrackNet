@@ -40,9 +40,12 @@ def main(validate=False):
 
     mc_stations = addStationIndex(mc_df, 'z_in')
     total_events = len(mc_stations.event_id.value_counts())
-
     mc_filtered_grouped = mc_stations.groupby(['event_id', 'track_id'], as_index=False) \
-        .filter(lambda x: len(x['track_id']) > 5 and progress(x.name[0], total_events, " filtering events.") is None) \
+        .filter(
+        lambda x: len(x.station_id.value_counts()) == 6
+                  and progress(x.name[0],
+                               total_events,
+                               " filtering events.") is None) \
         .groupby(['station_id', 'event_id'])
     print("\nStarting event matching\n")
     # mc_grouped = mc_stations.groupby(['event_id']).filter(lambda df: df.track_id.value_counts() > 1)
@@ -105,11 +108,13 @@ def validate_draw(found_idx, hits_points, mc_x, mc_xy, mc_y, x, y):
     for num, idx in enumerate(found_idx):
         print(hits_points[idx], mc_xy[num])
 
+
 def dist(df_row):
     a = df_row['x':'z'].values
     b = df_row['x_in':'z_in'].values
     progress(df_row.event_id, dist.total_events, " validating events.")
     return np.linalg.norm(a - b)
+
 
 dist.total_events = 0
 
@@ -135,6 +140,7 @@ def validate_all():
     ev_id = int(row.event_id)
     print(res[(res.track_id == tr_id) & (res.event_id == ev_id)].to_string())
     return
+
 
 if __name__ == '__main__':
     validate_all()
