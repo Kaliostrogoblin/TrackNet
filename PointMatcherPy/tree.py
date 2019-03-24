@@ -60,6 +60,7 @@ def get_adj_nodes_dist_all_for_event_id(event_id, preserve_fakes):
 
 
 def visualize_graph(G):
+    plt.figure()
     pos = nx.spring_layout(G)  # positions for all nodes
     elarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5]
     esmall = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] <= 0.5]
@@ -76,27 +77,24 @@ def visualize_graph(G):
     nx.draw_networkx_labels(G, pos, font_size=5, font_family='sans-serif')
 
     plt.axis('off')
-    plt.show()
 
 def tree_try():
     G = nx.Graph()
+    event_id = 1
 
     # get graph for all hits
-    all = get_adj_nodes_dist_all_for_event_id(6, True)
-
-    # get graph for only true hits
-    true_only = get_adj_nodes_dist_all_for_event_id(6, False)
-
-
-    G.add_weighted_edges_from(all
-                              #true_only
-                              )
-
-
+    all = get_adj_nodes_dist_all_for_event_id(event_id, True)
+    G.add_weighted_edges_from(all)
     G = nx.minimum_spanning_tree(G)
     visualize_graph(G)
 
+    # get graph for only true hits
+    true_only = get_adj_nodes_dist_all_for_event_id(event_id, False)
+    G1 = nx.Graph()
+    G1.add_weighted_edges_from(true_only)
+    visualize_graph(G1)
 
+    plt.show()
     pass
 
 
